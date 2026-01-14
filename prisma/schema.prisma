@@ -16,4 +16,15 @@ model Nota {
   description String?
   limitDate   DateTime
   createdAt   DateTime  @default(now())
+  userId      Int?       @unique
+  user        User?      @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String
+  password  String
+  createdAt DateTime  @default(now())
+  notes     Nota[]
 }
