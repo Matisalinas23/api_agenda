@@ -1,4 +1,4 @@
-import { ValidationError } from "../errors/validationError"
+import { ValidationError } from "../../errors/validationError"
 import { ICreateNote } from "./note.interface"
 
 export function validateCreateNote(dto: ICreateNote): void {
