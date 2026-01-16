@@ -17,4 +17,10 @@ export function validateCreateNote(dto: ICreateNote): void {
   if (!dto.limitDate) {
     throw new ValidationError("LimitDate is required")
   }
+
+  const date = new Date(dto.limitDate)
+
+  if (!isNaN(date.getTime())) {
+    throw new ValidationError("LimitDate has an invalid format")
+  }
 }
