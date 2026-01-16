@@ -1,6 +1,6 @@
-import { ConnectionError } from "../errors/connectionError";
-import { notFoundError } from "../errors/notFoundError";
-import { prisma } from "../lib/prisma";
+import { ConnectionError } from "../../errors/connectionError";
+import { notFoundError } from "../../errors/notFoundError";
+import { prisma } from "../../lib/prisma";
 import { ICreateNote } from "./note.interface";
 import { validateCreateNote } from "./note.validation";
 
@@ -32,6 +32,9 @@ export const createNoteServie = async (dto: ICreateNote) => {
                 textColor: textColor,
                 limitDate: dto.limitDate,
                 description: dto.description,
+            },
+            include: {
+                user: true
             }
         })
     } catch (error: any) {
@@ -39,7 +42,7 @@ export const createNoteServie = async (dto: ICreateNote) => {
     }
 }
 
-export const updateNoteService = async (dto: ICreateNote, id: string) => {
+export const updateNoteService = async (dto: ICreateNote, id: string | string[]) => {
     const textColor = getTextColor(dto.color)
 
     try {
@@ -63,7 +66,7 @@ export const updateNoteService = async (dto: ICreateNote, id: string) => {
     }
 }
 
-export const deleteNoteService = async (id: string) => {
+export const deleteNoteService = async (id: string | string[]) => {
     try {
         return await prisma.nota.delete({
             where: { id: Number(id) }
