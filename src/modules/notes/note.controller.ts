@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { createNoteServie, deleteNoteService, getAllNotesService, updateNoteService } from "./note.service";
 
-export const getAllNotes = async (req: Request, res: Response) => {
+export const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const notes = await getAllNotesService()
         res.status(200).json(notes)
     } catch (error) {
-        res.status(500).json({ message: "Problem with database trying to bring notes"})
+        next(error)
     }
 }
 
