@@ -5,5 +5,6 @@ export class ConnectionError extends CustomError {
 
   constructor(message = "Service unavailable", originalError?: unknown) {
     super(message, originalError)
+    this.name = "ConnectionError"
   }
 }

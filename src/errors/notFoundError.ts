@@ -5,5 +5,6 @@ export class notFoundError extends CustomError {
 
   constructor(message: string) {
     super(message)
+    this.name = "NotFoundError"
   }
 }
