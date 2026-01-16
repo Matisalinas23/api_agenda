@@ -1,10 +1,10 @@
 import express, { Request, Response } from "express"
 import cors from "cors"
 import dotenv from "dotenv"
-import { errorHandler } from "./middleweres/errorHandler"
 import notesRoutes from "./modules/notes/note.router"
 import authRoutes from "./modules/auth/auth.router"
 import usersRoutes from "./modules/user/user.route"
+import { errorHandler } from "./middleweres/errorHandler"
 
 dotenv.config()
 const app = express()
