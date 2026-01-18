@@ -1,9 +1,9 @@
 import { ConflictError } from "../../errors/conflictError";
 import { ConnectionError } from "../../errors/connectionError";
 import { CustomError } from "../../errors/customError";
-import { notFoundError } from "../../errors/notFoundError";
+import { UnauthorizedError } from "../../errors/unauthorizedError";
 import { prisma } from "../../lib/prisma";
-import { ICreateUser, IUser } from "../user/user.interface";
+import { ICreateUser } from "../user/user.interface";
 import { ILogin } from "./auth.interface";
 import { validateLoginUser, validatePassword, validateRegisterUser } from "./auth.validation";
 import bcrypt from "bcrypt"
@@ -40,19 +40,17 @@ export const loginUserService = async (login: ILogin) => {
     validateLoginUser(login)
 
     try {
-        const user: IUser | null = await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
             where: { email: login.email },
             include: { notes: true }
         })
 
-        if (!user) {
-            throw new notFoundError("User not found")
-        }
+        if (!user) throw new UnauthorizedError("Email or password are incorrect")
 
         await validatePassword(login.password, user.password)
 
         return user
-    } catch (error: any) {
+    } catch (error: any) {        
         if (error instanceof CustomError) {
             throw error
         }

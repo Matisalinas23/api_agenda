@@ -60,7 +60,6 @@ export async function validatePassword(loginPassword: string, userPassword: stri
     const match = await bcrypt.compare(loginPassword, userPassword)
 
     if (!match) {
-        console.log("FALSE")
         throw new UnauthorizedError("Password or email are incorrect")
     }
 }
