@@ -33,7 +33,7 @@ export function validateRegisterUser(user: ICreateUser): void {
         throw new ValidationError("Username must have 20 or less characters")
     }
 
-    if (password) {
+    if (!password) {
         throw new ValidationError("Password is required")
     }
     if (typeof password !== "string") {
