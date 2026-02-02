@@ -80,11 +80,11 @@ export const deleteNoteService = async (id: string | string[]) => {
     }
 }
 
-export const orderNoteByAssignature = async () => {
+export const orderNoteByAssignatureService = async () => {
     try {
         return await prisma.nota.findMany({
             orderBy: {
-                assignature: "desc"
+                assignature: "asc"
             }
         })
     } catch (error) {
