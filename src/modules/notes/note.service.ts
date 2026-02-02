@@ -5,13 +5,13 @@ import { ICreateNote } from "./note.interface";
 import { validateCreateNote } from "./note.validation";
 
 const getTextColor = (color: string) => {
-    const darkColors = ["#E54444", "#F38A48", "#56EB83", "#5F62F2", "#AF78EA", "#E171E6", "#535353"];
+    const darkColors = ["#FF8989", "#FFAA74", "#8CADFE", "#C79EF3", "#E7A1EA", "#6B6B6B"];
 
     if (darkColors.includes(color)) {
-        return "#ffffff"
+        return "#333333"
     }
 
-    return "#222222"
+    return "#333333"
 }
 
 export const getAllNotesService = async () => {
