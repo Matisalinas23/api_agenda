@@ -1,6 +1,7 @@
 import { ConflictError } from "../../errors/conflictError";
 import { ConnectionError } from "../../errors/connectionError";
 import { CustomError } from "../../errors/customError";
+import { DatabaseError } from "../../errors/databaseError";
 import { notFoundError } from "../../errors/notFoundError";
 import { UnauthorizedError } from "../../errors/unauthorizedError";
 import { prisma } from "../../lib/prisma";
@@ -56,7 +57,7 @@ export const registerUserService = async (user: ICreateUser) => {
             throw new ConflictError("Email was already registered")
         }
 
-        throw new ConnectionError("Failed to register user", error)
+        throw new DatabaseError("Failed to register user")
     }
 }
 
@@ -84,7 +85,7 @@ export const loginUserService = async (login: ILogin) => {
             throw error
         }
 
-        throw new ConnectionError("Failed to login user", error)
+        throw new DatabaseError("Failed to login user")
     }
 }
 

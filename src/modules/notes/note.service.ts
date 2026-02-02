@@ -1,7 +1,7 @@
-import { ConnectionError } from "../../errors/connectionError";
+import { DatabaseError } from "../../errors/databaseError";
 import { notFoundError } from "../../errors/notFoundError";
 import { prisma } from "../../lib/prisma";
-import { ICreateNote } from "./note.interface";
+import { ICreateNote, INote } from "./note.interface";
 import { validateCreateNote } from "./note.validation";
 
 const getTextColor = (color: string) => {
@@ -38,7 +38,7 @@ export const createNoteServie = async (dto: ICreateNote) => {
             }
         })
     } catch (error: any) {
-        throw new ConnectionError("Failed to create note", error)
+        throw new DatabaseError("Failed to create note")
     }
 }
 
@@ -59,10 +59,10 @@ export const updateNoteService = async (dto: ICreateNote, id: string | string[])
         })
     } catch (error: any) {
         if (error.code === "P2025") {
-            throw new notFoundError("Note not found")
+            throw new notFoundError("Note was not found")
         }
 
-        throw new ConnectionError("Failed to update note", error)
+        throw new DatabaseError("Failed to update note")
     }
 }
 
@@ -76,6 +76,18 @@ export const deleteNoteService = async (id: string | string[]) => {
             throw new notFoundError("Note not found")
         }
 
-        throw new ConnectionError("Failed to delete note", error)
+        throw new DatabaseError("Failed delete note")
+    }
+}
+
+export const orderNoteByAssignature = async () => {
+    try {
+        return await prisma.nota.findMany({
+            orderBy: {
+                assignature: "desc"
+            }
+        })
+    } catch (error) {
+        throw new DatabaseError("Failed to order note by assignature")
     }
 }
