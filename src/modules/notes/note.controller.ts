@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { createNoteServie, deleteNoteService, getAllNotesService, orderNoteByAssignatureService, updateNoteService } from "./note.service";
+import { createNoteServie, deleteNoteService, getAllNotesService, orderNoteByAssignatureService, orderNotesByDateService, updateNoteService } from "./note.service";
 
 export const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -43,6 +43,15 @@ export const deleteNote = async (req: Request, res: Response, next: NextFunction
 export const orderNotesByAssignature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const notes = await orderNoteByAssignatureService()
+        res.status(200).json(notes)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const orderNotesByDate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const notes = await orderNotesByDateService()
         res.status(200).json(notes)
     } catch (error) {
         next(error)

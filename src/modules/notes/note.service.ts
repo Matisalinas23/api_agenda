@@ -91,3 +91,15 @@ export const orderNoteByAssignatureService = async () => {
         throw new DatabaseError("Failed to order note by assignature")
     }
 }
+
+export const orderNotesByDateService = async () => {
+    try {
+        return await prisma.nota.findMany({
+            orderBy: {
+                limitDate: "asc"
+            }
+        })
+    } catch (error) {
+        throw new DatabaseError("Failed to order by date")
+    }
+}
