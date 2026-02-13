@@ -1,8 +1,7 @@
 import { ConflictError } from "../../errors/conflictError";
-import { ConnectionError } from "../../errors/connectionError";
 import { CustomError } from "../../errors/customError";
 import { DatabaseError } from "../../errors/databaseError";
-import { notFoundError } from "../../errors/notFoundError";
+import { NotFoundError } from "../../errors/notFoundError";
 import { UnauthorizedError } from "../../errors/unauthorizedError";
 import { prisma } from "../../lib/prisma";
 import { ICreateUser } from "../user/user.interface";
@@ -101,7 +100,7 @@ export const refreshTokenService = async (refreshToken: string) => {
         where: { id: Number(payload.userId) }
     });
 
-    if (!user) throw new notFoundError("User not found");
+    if (!user) throw new NotFoundError("User not found");
 
     const SECRET = process.env.SECRET
     const newAccessToken = generateAccessToken(user.id, user.email, SECRET!);

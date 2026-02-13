@@ -1,8 +1,8 @@
 import { DatabaseError } from "../../errors/databaseError";
-import { notFoundError } from "../../errors/notFoundError";
+import { NotFoundError } from "../../errors/notFoundError";
 import { prisma } from "../../lib/prisma";
 import { ICreateNote, INote } from "./note.interface";
-import { validateCreateNote } from "./note.validation";
+import { validateCreateNote, validateUpdateNote } from "./note.validation";
 
 const getTextColor = (color: string) => {
     const darkColors = ["#FF8989", "#FFAA74", "#8CADFE", "#C79EF3", "#E7A1EA", "#6B6B6B"];
@@ -44,6 +44,7 @@ export const createNoteServie = async (dto: ICreateNote) => {
 
 export const updateNoteService = async (dto: ICreateNote, id: string | string[]) => {
     const textColor = getTextColor(dto.color)
+    validateUpdateNote(dto, textColor)
 
     try {
         return await prisma.nota.update({
@@ -59,10 +60,11 @@ export const updateNoteService = async (dto: ICreateNote, id: string | string[])
         })
     } catch (error: any) {
         if (error.code === "P2025") {
-            throw new notFoundError("Note was not found")
+            throw new NotFoundError("Note was not found")
         }
 
-        throw new DatabaseError("Failed to update note")
+        console.error(error)
+        throw error
     }
 }
 
@@ -73,7 +75,7 @@ export const deleteNoteService = async (id: string | string[]) => {
         })
     } catch (error: any) {
         if (error.code === "P2025") {
-            throw new notFoundError("Note not found")
+            throw new NotFoundError("Note not found")
         }
 
         throw new DatabaseError("Failed delete note")
