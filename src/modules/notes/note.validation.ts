@@ -4,7 +4,6 @@ import { ICreateNote } from "./note.interface"
 export function validateCreateNote(noteValues: ICreateNote): void {
   const { title, assignature, color, description, limitDate } = noteValues
 
-
   if (!title) {
     throw new ValidationError("Title is required")
   }
@@ -56,5 +55,26 @@ export function validateCreateNote(noteValues: ICreateNote): void {
 
   if (isNaN(date.getTime())) {
     throw new ValidationError("LimitDate has an invalid format")
+  }
+}
+
+export function validateUpdateNote(updatedNote: ICreateNote, textColor: string) {
+  if (!updatedNote.assignature) {
+    throw new ValidationError("Assignature is required")
+  }
+  if (!updatedNote.title) {
+    throw new ValidationError("Title is required")
+  }
+  if (!updatedNote.color) {
+    throw new ValidationError("Color is required")
+  }
+  if (!updatedNote.description) {
+    throw new ValidationError("Descripcion is required")
+  }
+  if (!updatedNote.limitDate) {
+    throw new ValidationError("Limit date is required")
+  }
+  if (!textColor) {
+    throw new ValidationError("Text color is required")
   }
 }
