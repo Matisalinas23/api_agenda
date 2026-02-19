@@ -1,7 +1,7 @@
 import { ConnectionError } from "../../errors/connectionError"
 import { CustomError } from "../../errors/customError"
 import { DatabaseError } from "../../errors/databaseError"
-import { notFoundError } from "../../errors/notFoundError"
+import { NotFoundError } from "../../errors/notFoundError"
 import { prisma } from "../../lib/prisma"
 import { validateUserId } from "./user.validation"
 
@@ -19,7 +19,7 @@ export const getUserService = async (id: unknown) => {
         })
     
         if (!user) {
-            throw new notFoundError("User not found")
+            throw new NotFoundError("User not found")
         }
 
         return user
