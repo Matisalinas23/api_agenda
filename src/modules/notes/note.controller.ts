@@ -12,7 +12,7 @@ export const getAllNotes = async (req: Request, res: Response, next: NextFunctio
 
 export const createNote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const note = await createNoteServie(req.body)
+        const note = await createNoteServie(req.body, req.params.id)
         res.status(201).json(note)
     } catch (error) {
         next(error)

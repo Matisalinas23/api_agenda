@@ -1,8 +1,20 @@
 import { ValidationError } from "../../errors/validationError"
 import { ICreateNote } from "./note.interface"
 
-export function validateCreateNote(noteValues: ICreateNote): void {
+export function validateCreateNote(noteValues: ICreateNote, userId: string | string[]): void {
   const { title, assignature, color, description, limitDate } = noteValues
+  const parsedUserId = Number(userId)
+
+  if (!userId) {
+    throw new ValidationError("User id is required")
+  }
+  if (
+    Number.isNaN(parsedUserId) ||
+    !Number.isInteger(parsedUserId) ||
+    parsedUserId <= 0
+  ) {
+    throw new ValidationError("User id is invalid")
+  }
 
   if (!title) {
     throw new ValidationError("Title is required")

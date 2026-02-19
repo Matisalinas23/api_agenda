@@ -18,8 +18,8 @@ export const getAllNotesService = async () => {
     return prisma.nota.findMany()
 }
 
-export const createNoteServie = async (dto: ICreateNote) => {
-    validateCreateNote(dto)
+export const createNoteServie = async (dto: ICreateNote, userId: string | string[]) => {
+    validateCreateNote(dto, userId)
     
     try {
         const textColor = getTextColor(dto.color)
@@ -32,9 +32,9 @@ export const createNoteServie = async (dto: ICreateNote) => {
                 textColor: textColor,
                 limitDate: dto.limitDate,
                 description: dto.description,
-            },
-            include: {
-                user: true
+                user: {
+                    connect: { id: Number(userId) }
+                }
             }
         })
     } catch (error: any) {
