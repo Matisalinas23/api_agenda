@@ -8,7 +8,7 @@ router.get('/orderByAssignature', authMiddleware, orderNotesByAssignature)
 router.get('/orderByDate', authMiddleware, orderNotesByDate)
 router.put('/:id', authMiddleware, updateNote)
 router.delete('/:id', authMiddleware, deleteNote)
+router.post('/:id', authMiddleware, createNote)
 router.get('/', authMiddleware, getAllNotes)
-router.post('/', authMiddleware, createNote)
 
 export default router

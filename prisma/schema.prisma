@@ -16,7 +16,7 @@ model Nota {
   description String?
   limitDate   DateTime
   createdAt   DateTime @default(now())
-  userId      Int      @unique
+  userId      Int
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
