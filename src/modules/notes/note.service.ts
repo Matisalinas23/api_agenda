@@ -1,7 +1,8 @@
 import { DatabaseError } from "../../errors/databaseError";
 import { NotFoundError } from "../../errors/notFoundError";
 import { prisma } from "../../lib/prisma";
-import { ICreateNote, INote } from "./note.interface";
+import { validateUserId } from "../user/user.validation";
+import { ICreateNote } from "./note.interface";
 import { validateCreateNote, validateUpdateNote } from "./note.validation";
 
 const getTextColor = (color: string) => {
@@ -19,7 +20,8 @@ export const getAllNotesService = async () => {
 }
 
 export const createNoteServie = async (dto: ICreateNote, userId: string | string[]) => {
-    validateCreateNote(dto, userId)
+    validateCreateNote(dto)
+    validateUserId(userId)
     
     try {
         const textColor = getTextColor(dto.color)
@@ -82,9 +84,14 @@ export const deleteNoteService = async (id: string | string[]) => {
     }
 }
 
-export const orderNoteByAssignatureService = async () => {
+export const orderNoteByAssignatureService = async (userId: string | string[]) => {
+    validateUserId(userId)
+
     try {
         return await prisma.nota.findMany({
+            where: {
+                userId: Number(userId)
+            },
             orderBy: {
                 assignature: "asc"
             }
@@ -94,9 +101,14 @@ export const orderNoteByAssignatureService = async () => {
     }
 }
 
-export const orderNotesByDateService = async () => {
+export const orderNotesByDateService = async (userId: string | string[]) => {
+    validateUserId(userId)
+
     try {
         return await prisma.nota.findMany({
+            where: {
+                userId: Number(userId)
+            },
             orderBy: {
                 limitDate: "asc"
             }

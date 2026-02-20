@@ -4,8 +4,8 @@ import { authMiddleware } from '../../middleweres/authMiddleware'
 
 const router = express.Router()
 
-router.get('/orderByAssignature', authMiddleware, orderNotesByAssignature)
-router.get('/orderByDate', authMiddleware, orderNotesByDate)
+router.get('/:id/orderByAssignature', authMiddleware, orderNotesByAssignature)
+router.get('/:id/orderByDate', authMiddleware, orderNotesByDate)
 router.put('/:id', authMiddleware, updateNote)
 router.delete('/:id', authMiddleware, deleteNote)
 router.post('/:id', authMiddleware, createNote)

@@ -42,7 +42,7 @@ export const deleteNote = async (req: Request, res: Response, next: NextFunction
 
 export const orderNotesByAssignature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const notes = await orderNoteByAssignatureService()
+        const notes = await orderNoteByAssignatureService(req.params.id)
         res.status(200).json(notes)
     } catch (error) {
         next(error)
@@ -51,7 +51,7 @@ export const orderNotesByAssignature = async (req: Request, res: Response, next:
 
 export const orderNotesByDate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const notes = await orderNotesByDateService()
+        const notes = await orderNotesByDateService(req.params.id)
         res.status(200).json(notes)
     } catch (error) {
         next(error)
