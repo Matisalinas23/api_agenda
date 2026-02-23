@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import notesRoutes from "./modules/notes/note.router"
 import authRoutes from "./modules/auth/auth.router"
 import usersRoutes from "./modules/user/user.route"
+import internalRoutes from "./modules/internal/internal.router"
 import { errorHandler } from "./middleweres/errorHandler"
 import cookieParser from "cookie-parser"
 
@@ -24,6 +25,7 @@ app.get("/health", (req: Request, res: Response) => {
 app.use("/notes", notesRoutes)
 app.use("/auth", authRoutes)
 app.use("/users", usersRoutes)
+app.use("/internal", internalRoutes)
 
 app.use(errorHandler)
 

@@ -1,6 +1,5 @@
 import { ConflictError } from "../../errors/conflictError";
 import { CustomError } from "../../errors/customError";
-import { DatabaseError } from "../../errors/databaseError";
 import { NotFoundError } from "../../errors/notFoundError";
 import { UnauthorizedError } from "../../errors/unauthorizedError";
 import { prisma } from "../../lib/prisma";
@@ -10,10 +9,8 @@ import { validateLoginUser, validatePassword, validateRegisterUser } from "./aut
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { Resend } from "resend";
 import { AutenticationError } from "../../errors/autenticationError";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendVerificationEmail } from "../../services/email.service";
 
 const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10)
@@ -39,26 +36,6 @@ const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: str
         REFRESH_SECRET,
         { "expiresIn": "1d" }
     );
-}
-
-const sendVerificationEmail = async (email: string, token: string) => {
-
-    const { error, data } = await resend.emails.send({
-        from: "Agenda <onboarding@resend.dev>",
-        to: email,
-        subject: "Verifica tu cuenta",
-        html: `
-            <h2>Bienvenido a Agenda Web</h2>
-            <p>Introduce el siguiente código de confirmación para verificar tu cuenta</p>
-            <p>${token}</p>
-            <p>Este código expirará en 10 minutos</p>
-        `,
-    });
-
-    if (error) {
-        console.log(error)
-        throw new Error(error.message);
-    }
 }
 
 interface IRegister {
