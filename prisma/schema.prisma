@@ -15,6 +15,7 @@ model Nota {
   textColor   String
   description String?
   limitDate   DateTime
+  dueDate     DateTime
   createdAt   DateTime @default(now())
   userId      Int
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
