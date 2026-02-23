@@ -13,7 +13,7 @@ model Nota {
   assignature  String
   color        String
   textColor    String
-  description  String
+  description  String?
   limitDate    DateTime
   reminderSent Boolean  @default(false)
   createdAt    DateTime @default(now())
