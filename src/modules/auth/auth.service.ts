@@ -11,6 +11,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { Resend } from "resend";
+import { AutenticationError } from "../../errors/autenticationError";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -103,8 +104,8 @@ export const loginUserService = async (login: ILogin) => {
             include: { notes: true }
         })
 
-        if (!user) throw new UnauthorizedError("Email or password are incorrect")
-        if (!user.verified) throw new UnauthorizedError("User is not verified yet")
+        if (!user) throw new UnauthorizedError("Email or password are incorrect");
+        if (!user.verified) throw new AutenticationError("User is not verified yet");
 
         await validatePassword(login.password, user.password)
 
@@ -114,12 +115,13 @@ export const loginUserService = async (login: ILogin) => {
         const refreshToken = generateRefreshToken(user.id, user.email, REFRESH_SECRET!)
 
         return { token, refreshToken }
-    } catch (error: any) {        
+    } catch (error: any) {      
         if (error instanceof CustomError) {
             throw error
         }
 
-        throw new DatabaseError("Failed to login user")
+        console.error(error)
+        throw error
     }
 }
 
