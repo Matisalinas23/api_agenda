@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express"
-import { loginUserService, refreshTokenService, registerUserService } from "./auth.service"
+import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const user = await registerUserService(req.body)
-        res.status(201).json(user)
+        const { user, verificationToken } = await registerUserService(req.body)
+        res.status(201).json({ user, verificationToken })
     } catch (error) {
         next(error)
     }
@@ -48,3 +48,10 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
         next(error);
     }
 }
+
+export const verifyEmail = async (req: Request, res: Response) => {
+    const { token } = req.query;
+    const result = await verifyEmailByTokenService(String(token));
+
+    res.status(200).json(result);
+};

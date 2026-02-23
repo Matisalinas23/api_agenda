@@ -21,11 +21,21 @@ model Nota {
 }
 
 model User {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  username          String
+  password          String
+  createdAt         DateTime @default(now())
+  verified          Boolean  @default(false)
+  notes             Nota[]
+  verificationToken VerificationToken?
+}
+
+model VerificationToken {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String
-  password  String
-  createdAt DateTime @default(now())
-  verified  Boolean  @default(false)
-  notes     Nota[]
+  token     String   @unique
+  expiresAt DateTime
+  userId    Int      @unique
+
+  user      User     @relation(fields: [userId], references: [id])
 }

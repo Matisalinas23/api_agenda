@@ -4,11 +4,15 @@ import { DatabaseError } from "../../errors/databaseError";
 import { NotFoundError } from "../../errors/notFoundError";
 import { UnauthorizedError } from "../../errors/unauthorizedError";
 import { prisma } from "../../lib/prisma";
-import { ICreateUser } from "../user/user.interface";
+import { ICreateUser, IUser } from "../user/user.interface";
 import { ILogin } from "./auth.interface";
 import { validateLoginUser, validatePassword, validateRegisterUser } from "./auth.validation";
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10)
@@ -36,27 +40,57 @@ const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: str
     );
 }
 
-export const registerUserService = async (user: ICreateUser) => {
-    validateRegisterUser(user)
-    const hashedPassword = await hashPassword(user.password)
+const sendVerificationEmail = async (email: string, token: string) => {
+
+    const { error, data } = await resend.emails.send({
+        from: "Agenda <onboarding@resend.dev>",
+        to: email,
+        subject: "Verifica tu cuenta",
+        html: `
+            <h2>Bienvenido a Agenda Web</h2>
+            <p>Introduce el siguiente código de confirmación para verificar tu cuenta</p>
+            <p>${token}</p>
+            <p>Este código expirará en 10 minutos</p>
+        `,
+    });
+
+    if (error) {
+        console.log(error)
+        throw new Error(error.message);
+    }
+}
+
+interface IRegister {
+    user: IUser
+    verificationToken: string
+}
+
+export const registerUserService = async (userDto: ICreateUser): Promise<IRegister> => {
+    validateRegisterUser(userDto)
+    const hashedPassword = await hashPassword(userDto.password)
 
     try {
-        return await prisma.user.create({
+        const user: IUser = await prisma.user.create({
             data: {
-                email: user.email,
-                username: user.username,
+                email: userDto.email,
+                username: userDto.username,
                 password: hashedPassword,
             },
             include: {
                 notes: true
             }
         })
+
+        const verificationToken: string = await createVerificationTokenService(user.id, user.email)
+
+        return { user, verificationToken }
     } catch (error: any) {
         if (error.code === "P2002") {
             throw new ConflictError("Email was already registered")
         }
 
-        throw new DatabaseError("Failed to register user")
+        console.error(error)
+        throw error
     }
 }
 
@@ -70,6 +104,7 @@ export const loginUserService = async (login: ILogin) => {
         })
 
         if (!user) throw new UnauthorizedError("Email or password are incorrect")
+        if (!user.verified) throw new UnauthorizedError("User is not verified yet")
 
         await validatePassword(login.password, user.password)
 
@@ -107,3 +142,47 @@ export const refreshTokenService = async (refreshToken: string) => {
 
     return newAccessToken;
 }
+
+export const createVerificationTokenService = async (userId: number, email: string) => {
+    const token = crypto.randomInt(100000, 1000000).toString(); // length 6
+
+    await prisma.verificationToken.deleteMany({
+        where: { userId }
+    });
+
+    await prisma.verificationToken.create({
+        data: {
+            token,
+            userId: Number(userId),
+            expiresAt: new Date(Date.now() + 1000 * 60 * 10)
+        }
+    })
+
+    await sendVerificationEmail(email, token)
+
+    return token
+}
+
+export const verifyEmailByTokenService = async (token: string) => {
+  if (!token) {
+    throw new UnauthorizedError("Token requerido");
+  }
+
+  const verification = await prisma.verificationToken.findUnique({
+    where: { token },
+  });
+
+  if (!verification) throw new UnauthorizedError("Token inválido");
+  if (verification.expiresAt < new Date()) throw new UnauthorizedError("Token expirado");
+
+  await prisma.user.update({
+    where: { id: verification.userId },
+    data: { verified: true },
+  });
+
+  await prisma.verificationToken.delete({
+    where: { token },
+  });
+
+  return { message: "Cuenta verificada correctamente" };
+};
