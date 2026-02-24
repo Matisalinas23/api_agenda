@@ -4,8 +4,8 @@ import { ValidationError } from "../../errors/validationError"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { user, verificationToken } = await registerUserService(req.body)
-        res.status(201).json({ user, verificationToken })
+        const user = await registerUserService(req.body)
+        res.status(201).json(user)
     } catch (error) {
         next(error)
     }

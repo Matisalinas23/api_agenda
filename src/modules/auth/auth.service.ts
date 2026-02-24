@@ -38,12 +38,7 @@ const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: str
     );
 }
 
-interface IRegister {
-    user: IUser
-    verificationToken: string
-}
-
-export const registerUserService = async (userDto: ICreateUser): Promise<IRegister> => {
+export const registerUserService = async (userDto: ICreateUser): Promise<IUser> => {
     validateRegisterUser(userDto)
     const hashedPassword = await hashPassword(userDto.password)
 
@@ -59,9 +54,9 @@ export const registerUserService = async (userDto: ICreateUser): Promise<IRegist
             }
         })
 
-        const verificationToken: string = await createVerificationTokenService(user.id, user.email)
+        await createVerificationTokenService(user.id, user.email)
 
-        return { user, verificationToken }
+        return user
     } catch (error: any) {
         if (error.code === "P2002") {
             throw new ConflictError("Email was already registered")
@@ -138,8 +133,6 @@ export const createVerificationTokenService = async (userId: number, email: stri
     })
 
     await sendVerificationEmail(email, token)
-
-    return token
 }
 
 export const verifyEmailByTokenService = async (token: string) => {
@@ -147,12 +140,16 @@ export const verifyEmailByTokenService = async (token: string) => {
     throw new UnauthorizedError("Token requerido");
   }
 
+  console.log("token que viene: ", token)
+
   const verification = await prisma.verificationToken.findUnique({
     where: { token },
   });
 
   if (!verification) throw new UnauthorizedError("Token inválido");
   if (verification.expiresAt < new Date()) throw new UnauthorizedError("Token expirado");
+
+  console.log("token en la base de datos: ", verification.token)
 
   await prisma.user.update({
     where: { id: verification.userId },
