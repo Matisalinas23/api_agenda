@@ -140,16 +140,12 @@ export const verifyEmailByTokenService = async (token: string) => {
     throw new UnauthorizedError("Token requerido");
   }
 
-  console.log("token que viene: ", token)
-
   const verification = await prisma.verificationToken.findUnique({
     where: { token },
   });
 
   if (!verification) throw new UnauthorizedError("Token inválido");
   if (verification.expiresAt < new Date()) throw new UnauthorizedError("Token expirado");
-
-  console.log("token en la base de datos: ", verification.token)
 
   await prisma.user.update({
     where: { id: verification.userId },
