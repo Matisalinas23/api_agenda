@@ -73,7 +73,6 @@ export const loginUserService = async (login: ILogin) => {
     try {
         const user = await prisma.user.findUnique({
             where: { email: login.email },
-            include: { notes: true }
         })
 
         if (!user) throw new UnauthorizedError("Email or password are incorrect");
