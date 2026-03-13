@@ -5,7 +5,10 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     if (process.env.NODE_ENV !== "test") {
         console.log(err)
     }
-    
+
+    console.log(err)
+
+
     if (err instanceof CustomError) {
         return res.status(err.statusCode).json({
             error: err.name,
