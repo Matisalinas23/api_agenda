@@ -39,8 +39,16 @@ export const createNoteServie = async (dto: ICreateNote, userId: string | string
                 }
             }
         })
-    } catch (error: any) {
-        throw new DatabaseError("Failed to create note")
+    } catch (error: any) {        
+        if (error.code === "P2025") {
+            throw new NotFoundError("User was not found")
+        }
+
+        if (error.code === "P2003") {
+            throw new NotFoundError("User not found")
+        }
+
+        throw error
     }
 }
 
