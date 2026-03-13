@@ -16,7 +16,7 @@ const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10)
 }
 
-const generateAccessToken = (userId: number, email: string, SECRET: string) => {
+export const generateAccessToken = (userId: number, email: string, SECRET: string) => {
     return jwt.sign(
         {
             userId,
