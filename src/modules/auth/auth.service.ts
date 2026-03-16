@@ -38,18 +38,22 @@ const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: str
     );
 }
 
-export const registerUserService = async (userDto: ICreateUser): Promise<IUser> => {
+export const registerUserService = async (userDto: ICreateUser): Promise<any> => {
     validateRegisterUser(userDto)
     const hashedPassword = await hashPassword(userDto.password)
 
     try {
-        const user: IUser = await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 email: userDto.email,
                 username: userDto.username,
                 password: hashedPassword,
             },
-            include: {
+            select: {
+                id: true,
+                email: true,
+                username: true,
+                createdAt: true, // si existe en tu modelo
                 notes: true
             }
         })
@@ -118,6 +122,9 @@ export const refreshTokenService = async (refreshToken: string) => {
 
 export const createVerificationTokenService = async (userId: number, email: string) => {
     const token = crypto.randomInt(100000, 1000000).toString(); // length 6
+
+    console.log(userId)
+    console.log(email)
 
     await prisma.verificationToken.deleteMany({
         where: { userId }
