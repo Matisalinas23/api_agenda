@@ -123,9 +123,6 @@ export const refreshTokenService = async (refreshToken: string) => {
 export const createVerificationTokenService = async (userId: number, email: string) => {
     const token = crypto.randomInt(100000, 1000000).toString(); // length 6
 
-    console.log(userId)
-    console.log(email)
-
     await prisma.verificationToken.deleteMany({
         where: { userId }
     });
