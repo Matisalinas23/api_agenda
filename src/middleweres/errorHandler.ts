@@ -8,7 +8,6 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
 
     console.log(err)
 
-
     if (err instanceof CustomError) {
         return res.status(err.statusCode).json({
             error: err.name,

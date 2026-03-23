@@ -10,8 +10,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AutenticationError } from "../../errors/autenticationError";
-import { sendVerificationEmail } from "../../services/email.service";
 
+// ******************* REGISTER AND LOGIN SECTION ******************* //
 const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10)
 }
@@ -48,17 +48,17 @@ export const registerUserService = async (userDto: ICreateUser): Promise<any> =>
                 email: userDto.email,
                 username: userDto.username,
                 password: hashedPassword,
+                verified: true,
             },
             select: {
                 id: true,
                 email: true,
                 username: true,
                 createdAt: true, // si existe en tu modelo
-                notes: true
+                verified: true,
+                notes: true,
             }
         })
-
-        await createVerificationTokenService(user.id, user.email)
 
         return user
     } catch (error: any) {
@@ -120,6 +120,10 @@ export const refreshTokenService = async (refreshToken: string) => {
     return newAccessToken;
 }
 
+
+
+// ******************* OTHER SERVICES ******************* //
+
 export const createVerificationTokenService = async (userId: number, email: string) => {
     const token = crypto.randomInt(100000, 1000000).toString(); // length 6
 
@@ -134,8 +138,6 @@ export const createVerificationTokenService = async (userId: number, email: stri
             expiresAt: new Date(Date.now() + 1000 * 60 * 10)
         }
     })
-
-    await sendVerificationEmail(email, token)
 }
 
 export const verifyEmailByTokenService = async (token: string) => {
