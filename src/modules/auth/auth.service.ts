@@ -10,6 +10,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AutenticationError } from "../../errors/autenticationError";
+import { sendVerificationEmail } from "../../services/email.service";
 
 // ******************* REGISTER AND LOGIN SECTION ******************* //
 const hashPassword = async (password: string) => {
@@ -48,17 +49,20 @@ export const registerUserService = async (userDto: ICreateUser): Promise<any> =>
                 email: userDto.email,
                 username: userDto.username,
                 password: hashedPassword,
-                verified: true,
+                verified: false,
             },
             select: {
                 id: true,
                 email: true,
                 username: true,
-                createdAt: true, // si existe en tu modelo
+                createdAt: true,
                 verified: true,
                 notes: true,
             }
         })
+
+        const token = await createVerificationTokenService(user.id, user.email)
+        await sendVerificationEmail(user.email, token)
 
         return user
     } catch (error: any) {
@@ -90,7 +94,7 @@ export const loginUserService = async (login: ILogin) => {
         const refreshToken = generateRefreshToken(user.id, user.email, REFRESH_SECRET!)
 
         return { token, refreshToken }
-    } catch (error: any) {      
+    } catch (error: any) {
         if (error instanceof CustomError) {
             throw error
         }
@@ -138,28 +142,30 @@ export const createVerificationTokenService = async (userId: number, email: stri
             expiresAt: new Date(Date.now() + 1000 * 60 * 10)
         }
     })
+
+    return token;
 }
 
 export const verifyEmailByTokenService = async (token: string) => {
-  if (!token) {
-    throw new UnauthorizedError("Token requerido");
-  }
+    if (!token) {
+        throw new UnauthorizedError("Token requerido");
+    }
 
-  const verification = await prisma.verificationToken.findUnique({
-    where: { token },
-  });
+    const verification = await prisma.verificationToken.findUnique({
+        where: { token },
+    });
 
-  if (!verification) throw new UnauthorizedError("Token inválido");
-  if (verification.expiresAt < new Date()) throw new UnauthorizedError("Token expirado");
+    if (!verification) throw new UnauthorizedError("Token inválido");
+    if (verification.expiresAt < new Date()) throw new UnauthorizedError("Token expirado");
 
-  await prisma.user.update({
-    where: { id: verification.userId },
-    data: { verified: true },
-  });
+    await prisma.user.update({
+        where: { id: verification.userId },
+        data: { verified: true },
+    });
 
-  await prisma.verificationToken.delete({
-    where: { token },
-  });
+    await prisma.verificationToken.delete({
+        where: { token },
+    });
 
-  return { message: "Cuenta verificada correctamente" };
+    return { message: "Cuenta verificada correctamente" };
 };
