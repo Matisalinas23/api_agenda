@@ -12,7 +12,7 @@ const app = express()
 app.use(express.json())
 app.use(cors({
     origin: ["http://localhost:5173", "http://localhost:4173", "https://agenda-web-olive.vercel.app"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
     credentials: true,
 }))
 app.use(cookieParser());
