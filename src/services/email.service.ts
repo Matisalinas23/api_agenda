@@ -35,8 +35,9 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     }
 }
 
-export const sendReminderEmail = async (email: string, title: string, dueDate: Date) => {
+export const sendReminderEmail = async (email: string, title: string, dueDate: Date, daysLeft: number) => {
     try {
+        const message = daysLeft === 1 ? "Queda solo 1 día." : `Quedan solo ${daysLeft} días.`;
         await transporter.sendMail({
             from: `"Agenda" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -45,7 +46,7 @@ export const sendReminderEmail = async (email: string, title: string, dueDate: D
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
                     <h1>Recordatorio</h1>
                     <p>Tu nota "<strong>${title}</strong>" vence el ${dueDate.toDateString()}</p>
-                    <p>Quedan solo 3 días.</p>
+                    <p>${message}</p>
                 </div>
             `
         });
