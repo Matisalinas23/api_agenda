@@ -17,10 +17,10 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Debería ser true en producción (HTTPS)
             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            secure: process.env.NODE_ENV === "production",
             path: "/",
-            maxAge: 24*60*60*1000
+            maxAge: 24 * 60 * 60 * 1000
         });
 
         res.status(200).json(token)
@@ -30,14 +30,14 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 }
 
 export const authMe = async (req: Request, res: Response): Promise<void> => {
-  res.json({ user: req.user });
+    res.json({ user: req.user });
 }
 
 export const refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const refreshToken = req.cookies.refreshToken
 
-        if(!refreshToken) {
+        if (!refreshToken) {
             throw new ValidationError("No refresh token provided");
         }
 
