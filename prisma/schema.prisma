@@ -14,7 +14,8 @@ model Nota {
   textColor    String
   description  String?
   limitDate    DateTime
-  reminderSent Boolean  @default(false)
+  reminder3DaySent Boolean  @default(false)
+  reminder1DaySent Boolean  @default(false)
   createdAt    DateTime @default(now())
   userId       Int
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
