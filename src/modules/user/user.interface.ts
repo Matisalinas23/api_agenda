@@ -3,7 +3,8 @@ import { INote } from "../notes/note.interface"
 export interface ICreateUser {
     email: string
     username: string
-    password: string
+    password?: string
+    googleId?: string
 }
 
 export interface IUser extends ICreateUser {
