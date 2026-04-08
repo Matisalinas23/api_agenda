@@ -11,6 +11,8 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AutenticationError } from "../../errors/autenticationError";
 import { sendVerificationEmail } from "../../services/email.service";
+import { getGoogleUserInfo } from "../../lib/google";
+import { ValidationError } from "../../errors/validationError";
 
 // ******************* REGISTER AND LOGIN SECTION ******************* //
 const hashPassword = async (password: string) => {
@@ -41,7 +43,7 @@ const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: str
 
 export const registerUserService = async (userDto: ICreateUser): Promise<any> => {
     validateRegisterUser(userDto)
-    const hashedPassword = await hashPassword(userDto.password)
+    const hashedPassword = await hashPassword(userDto.password!)
 
     try {
         const user = await prisma.user.create({
@@ -58,6 +60,7 @@ export const registerUserService = async (userDto: ICreateUser): Promise<any> =>
                 createdAt: true,
                 verified: true,
                 notes: true,
+                googleId: true,
             }
         })
 
@@ -103,6 +106,44 @@ export const loginUserService = async (login: ILogin) => {
         throw error
     }
 }
+
+export const googleLoginService = async (code: string) => {
+    const googleUser = await getGoogleUserInfo(code);
+    const { email, name, id: googleId } = googleUser;
+
+    if (!email) throw new ValidationError("Google account must have an email");
+
+    let user = await prisma.user.findUnique({
+        where: { email },
+    });
+
+    if (user) {
+        // Link account if not already linked
+        if (!user.googleId) {
+            user = await prisma.user.update({
+                where: { email },
+                data: { googleId, verified: true },
+            });
+        }
+    } else {
+        // Create new user
+        user = await prisma.user.create({
+            data: {
+                email,
+                username: name || email.split("@")[0],
+                googleId,
+                verified: true,
+            },
+        });
+    }
+
+    const SECRET = process.env.SECRET;
+    const REFRESH_SECRET = process.env.REFRESH_SECRET;
+    const token = generateAccessToken(user.id, user.email, SECRET!);
+    const refreshToken = generateRefreshToken(user.id, user.email, REFRESH_SECRET!);
+
+    return { token, refreshToken };
+};
 
 export const refreshTokenService = async (refreshToken: string) => {
     const REFRESH_SECRET = process.env.REFRESH_SECRET;
