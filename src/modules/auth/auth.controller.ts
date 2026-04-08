@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express"
-import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService } from "./auth.service"
+import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
+import { getGoogleAuthUrl as generateGoogleUrl } from "../../lib/google"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -20,7 +21,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             secure: process.env.NODE_ENV === "production", // Debería ser true en producción (HTTPS)
             sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             path: "/",
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.status(200).json(token)
@@ -54,4 +55,35 @@ export const verifyEmail = async (req: Request, res: Response) => {
     const result = await verifyEmailByTokenService(String(token));
 
     res.status(200).json(result);
+};
+
+export const getGoogleAuthUrl = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const url = generateGoogleUrl();
+        res.json({ url });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const googleCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { code } = req.query;
+        if (!code) throw new ValidationError("No code provided");
+
+        const { token, refreshToken } = await googleLoginService(String(code));
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // Matching the standard login
+        });
+
+        const frontendUrl = "http://localhost:5173";
+        res.redirect(`${frontendUrl}/#token=${token}`);
+    } catch (error) {
+        next(error);
+    }
 };
