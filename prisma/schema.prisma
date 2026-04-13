@@ -29,6 +29,7 @@ model User {
   googleId          String?  @unique
   createdAt         DateTime @default(now())
   verified          Boolean  @default(false)
+  profileImage      String?
   notes             Nota[]
   verificationToken VerificationToken?
 }
