@@ -5,6 +5,7 @@ export interface ICreateUser {
     username: string
     password?: string
     googleId?: string
+    profileImage?: string
 }
 
 export interface IUser extends ICreateUser {
