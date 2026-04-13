@@ -89,7 +89,7 @@ export const loginUserService = async (login: ILogin) => {
         if (!user) throw new UnauthorizedError("Email or password are incorrect");
         if (!user.verified) throw new AutenticationError("User is not verified yet");
 
-        await validatePassword(login.password, user.password)
+        await validatePassword(login.password, user.password!)
 
         const SECRET = process.env.SECRET
         const REFRESH_SECRET = process.env.REFRESH_SECRET
@@ -109,7 +109,7 @@ export const loginUserService = async (login: ILogin) => {
 
 export const googleLoginService = async (code: string) => {
     const googleUser = await getGoogleUserInfo(code);
-    const { email, name, id: googleId } = googleUser;
+    const { email, name, id: googleId, picture } = googleUser;
 
     if (!email) throw new ValidationError("Google account must have an email");
 
@@ -118,11 +118,15 @@ export const googleLoginService = async (code: string) => {
     });
 
     if (user) {
-        // Link account if not already linked
-        if (!user.googleId) {
+        // Link account if not already linked or update picture
+        if (!user.googleId || user.profileImage !== picture) {
             user = await prisma.user.update({
                 where: { email },
-                data: { googleId, verified: true },
+                data: { 
+                    googleId, 
+                    verified: true,
+                    profileImage: picture || user.profileImage
+                },
             });
         }
     } else {
@@ -133,6 +137,7 @@ export const googleLoginService = async (code: string) => {
                 username: name || email.split("@")[0],
                 googleId,
                 verified: true,
+                profileImage: picture
             },
         });
     }
