@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express"
 import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
 import { getGoogleAuthUrl as generateGoogleUrl } from "../../lib/google"
+import { prisma } from "../../lib/prisma"
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -31,7 +32,21 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 }
 
 export const authMe = async (req: Request, res: Response): Promise<void> => {
-    res.json({ user: req.user });
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: (req.user as any).userId },
+            select: {
+                id: true,
+                email: true,
+                username: true,
+                profileImage: true,
+                verified: true
+            }
+        });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching user data" });
+    }
 }
 
 export const refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
