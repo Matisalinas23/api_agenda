@@ -10,7 +10,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AutenticationError } from "../../errors/autenticationError";
-import { sendVerificationEmail } from "../../services/email.service";
+import { sendVerificationEmail, sendResetPasswordEmail } from "../../services/email.service";
 import { getGoogleUserInfo } from "../../lib/google";
 import { ValidationError } from "../../errors/validationError";
 
@@ -215,3 +215,54 @@ export const verifyEmailByTokenService = async (token: string) => {
 
     return { message: "Cuenta verificada correctamente" };
 };
+
+export const forgotPasswordService = async (email: string) => {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+        return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hora
+
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+    await prisma.passwordResetToken.create({
+        data: {
+            token,
+            userId: user.id,
+            expiresAt
+        }
+    });
+
+    await sendResetPasswordEmail(user.email, token);
+
+    return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
+}
+
+export const resetPasswordService = async (token: string, newPassword: string) => {
+    const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { token },
+        include: { user: true }
+    });
+
+    if (!resetToken) throw new UnauthorizedError("Token inválido o expirado.");
+    
+    if (resetToken.expiresAt < new Date()) {
+        await prisma.passwordResetToken.delete({ where: { token } });
+        throw new UnauthorizedError("Token expirado.");
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { 
+            password: hashedPassword,
+            verified: true // If they can reset password, they've verified their email
+        }
+    });
+
+    await prisma.passwordResetToken.delete({ where: { token } });
+
+    return { message: "Contraseña actualizada correctamente." };
+}
