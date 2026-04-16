@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService } from "./auth.service"
+import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService, forgotPasswordService, resetPasswordService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
 import { getGoogleAuthUrl as generateGoogleUrl } from "../../lib/google"
 import { prisma } from "../../lib/prisma"
@@ -98,6 +98,30 @@ export const googleCallback = async (req: Request, res: Response, next: NextFunc
 
         const frontendUrl = "http://localhost:5173";
         res.redirect(`${frontendUrl}/#token=${token}`);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { email } = req.body;
+        if (!email) throw new ValidationError("Email requerido");
+
+        const result = await forgotPasswordService(email);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) throw new ValidationError("Token y nueva contraseña requeridos");
+
+        const result = await resetPasswordService(token, newPassword);
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }
