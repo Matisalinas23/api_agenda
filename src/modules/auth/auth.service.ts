@@ -30,16 +30,8 @@ export const generateAccessToken = (userId: number, email: string, SECRET: strin
     );
 }
 
-const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: string) => {
-    return jwt.sign(
-        {
-            userId,
-            email
-        },
-        REFRESH_SECRET,
-        { "expiresIn": "1d" }
-    );
-}
+// Ya no se usa generateRefreshToken como JWT para las sesiones stateful
+// const generateRefreshToken = (userId: number, email: string, REFRESH_SECRET: string) => { ... }
 
 export const registerUserService = async (userDto: ICreateUser): Promise<any> => {
     validateRegisterUser(userDto)
@@ -78,7 +70,7 @@ export const registerUserService = async (userDto: ICreateUser): Promise<any> =>
     }
 }
 
-export const loginUserService = async (login: ILogin) => {
+export const loginUserService = async (login: ILogin, ipAddress?: string, userAgent?: string) => {
     validateLoginUser(login)
 
     try {
@@ -92,9 +84,20 @@ export const loginUserService = async (login: ILogin) => {
         await validatePassword(login.password, user.password!)
 
         const SECRET = process.env.SECRET
-        const REFRESH_SECRET = process.env.REFRESH_SECRET
         const token = generateAccessToken(user.id, user.email, SECRET!)
-        const refreshToken = generateRefreshToken(user.id, user.email, REFRESH_SECRET!)
+        
+        const refreshToken = crypto.randomBytes(40).toString("hex");
+
+        await prisma.session.create({
+            data: {
+                userId: user.id,
+                refreshToken,
+                ipAddress,
+                userAgent,
+                expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+                isValid: true
+            }
+        });
 
         return { token, refreshToken }
     } catch (error: any) {
@@ -107,7 +110,7 @@ export const loginUserService = async (login: ILogin) => {
     }
 }
 
-export const googleLoginService = async (code: string) => {
+export const googleLoginService = async (code: string, ipAddress?: string, userAgent?: string) => {
     const googleUser = await getGoogleUserInfo(code);
     const { email, name, id: googleId, picture } = googleUser;
 
@@ -143,31 +146,86 @@ export const googleLoginService = async (code: string) => {
     }
 
     const SECRET = process.env.SECRET;
-    const REFRESH_SECRET = process.env.REFRESH_SECRET;
     const token = generateAccessToken(user.id, user.email, SECRET!);
-    const refreshToken = generateRefreshToken(user.id, user.email, REFRESH_SECRET!);
+    
+    const refreshToken = crypto.randomBytes(40).toString("hex");
+
+    await prisma.session.create({
+        data: {
+            userId: user.id,
+            refreshToken,
+            ipAddress,
+            userAgent,
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+            isValid: true
+        }
+    });
 
     return { token, refreshToken };
 };
 
 export const refreshTokenService = async (refreshToken: string) => {
-    const REFRESH_SECRET = process.env.REFRESH_SECRET;
-
-    const payload = jwt.verify(refreshToken, REFRESH_SECRET!) as {
-        userId: number;
-        email: string;
-    };
-
-    const user = await prisma.user.findUnique({
-        where: { id: Number(payload.userId) }
+    const session = await prisma.session.findUnique({
+        where: { refreshToken },
+        include: { user: true }
     });
 
-    if (!user) throw new NotFoundError("User not found");
+    if (!session || !session.isValid) {
+        throw new UnauthorizedError("Session is invalid or expired");
+    }
+
+    if (session.expiresAt < new Date()) {
+        await prisma.session.update({ where: { id: session.id }, data: { isValid: false } });
+        throw new UnauthorizedError("Session expired");
+    }
 
     const SECRET = process.env.SECRET
-    const newAccessToken = generateAccessToken(user.id, user.email, SECRET!);
+    const newAccessToken = generateAccessToken(session.userId, session.user.email, SECRET!);
 
     return newAccessToken;
+}
+
+export const logoutService = async (refreshToken: string) => {
+    if (!refreshToken) return;
+    try {
+        await prisma.session.update({
+            where: { refreshToken },
+            data: { isValid: false }
+        });
+    } catch (error) {
+        console.error("Error logging out session:", error);
+    }
+}
+
+export const getSessionsService = async (userId: number) => {
+    return await prisma.session.findMany({
+        where: {
+            userId,
+            isValid: true,
+            expiresAt: { gt: new Date() }
+        },
+        select: {
+            id: true,
+            ipAddress: true,
+            userAgent: true,
+            createdAt: true,
+            updatedAt: true
+        },
+        orderBy: { updatedAt: 'desc' }
+    });
+}
+
+export const revokeSessionService = async (sessionId: string, userId: number) => {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+
+    if (!session || session.userId !== userId) {
+        throw new NotFoundError("Session not found or unauthorized");
+    }
+
+    await prisma.session.update({
+        where: { id: sessionId },
+        data: { isValid: false }
+    });
 }
 
 
