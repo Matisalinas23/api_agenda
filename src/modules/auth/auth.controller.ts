@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService, forgotPasswordService, resetPasswordService } from "./auth.service"
+import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService, forgotPasswordService, resetPasswordService, logoutService, getSessionsService, revokeSessionService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
 import { getGoogleAuthUrl as generateGoogleUrl } from "../../lib/google"
 import { prisma } from "../../lib/prisma"
@@ -15,7 +15,9 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { token, refreshToken } = await loginUserService(req.body)
+        const ipAddress = req.ip || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'] || '';
+        const { token, refreshToken } = await loginUserService(req.body, ipAddress?.toString(), userAgent);
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -86,7 +88,9 @@ export const googleCallback = async (req: Request, res: Response, next: NextFunc
         const { code } = req.query;
         if (!code) throw new ValidationError("No code provided");
 
-        const { token, refreshToken } = await googleLoginService(String(code));
+        const ipAddress = req.ip || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'] || '';
+        const { token, refreshToken } = await googleLoginService(String(code), ipAddress?.toString(), userAgent);
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -126,3 +130,45 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 };
+
+export const logoutUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (refreshToken) {
+            await logoutService(refreshToken);
+        }
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/"
+        });
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getSessions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = (req.user as any).userId;
+        const sessions = await getSessionsService(userId);
+        res.json(sessions);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const revokeSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = (req.user as any).userId;
+        const { id: sessionId } = req.params;
+
+        if (typeof sessionId !== "string") throw new ValidationError("Session ID must be a string");
+
+        await revokeSessionService(sessionId, userId);
+        res.status(200).json({ message: "Session revoked successfully" });
+    } catch (error) {
+        next(error);
+    }
+}
