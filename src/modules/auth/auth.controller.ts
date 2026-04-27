@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService, forgotPasswordService, resetPasswordService, logoutService, getSessionsService, revokeSessionService } from "./auth.service"
+import { loginUserService, refreshTokenService, registerUserService, verifyEmailByTokenService, googleLoginService, forgotPasswordService, resetPasswordService, logoutService, getSessionsService, revokeSessionService, requestAccountDeletionService, reactivateAccountService } from "./auth.service"
 import { ValidationError } from "../../errors/validationError"
 import { getGoogleAuthUrl as generateGoogleUrl } from "../../lib/google"
 import { prisma } from "../../lib/prisma"
@@ -42,7 +42,8 @@ export const authMe = async (req: Request, res: Response): Promise<void> => {
                 email: true,
                 username: true,
                 profileImage: true,
-                verified: true
+                verified: true,
+                deleteAfter: true
             }
         });
         res.json(user);
@@ -168,6 +169,39 @@ export const revokeSession = async (req: Request, res: Response, next: NextFunct
 
         await revokeSessionService(sessionId, userId);
         res.status(200).json({ message: "Session revoked successfully" });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const requestAccountDeletion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = (req.user as any).userId;
+        const { password } = req.body;
+        
+        const result = await requestAccountDeletionService(userId, password);
+        
+        // Al solicitar la eliminación, limpiamos la cookie del refresh token
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/"
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const reactivateAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { token } = req.body;
+        if (!token) throw new ValidationError("Token de rehabilitación requerido");
+
+        const result = await reactivateAccountService(String(token));
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }

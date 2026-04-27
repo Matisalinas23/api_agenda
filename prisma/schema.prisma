@@ -30,10 +30,12 @@ model User {
   createdAt         DateTime @default(now())
   verified          Boolean  @default(false)
   profileImage      String?
+  deleteAfter       DateTime?
   notes             Nota[]
   verificationToken VerificationToken?
   passwordResetToken PasswordResetToken?
   sessions          Session[]
+  accountReactivationToken AccountReactivationToken?
 }
 
 model Session {
@@ -55,7 +57,7 @@ model PasswordResetToken {
   token     String   @unique
   expiresAt DateTime
   userId    Int      @unique
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -64,5 +66,13 @@ model VerificationToken {
   expiresAt DateTime
   userId    Int      @unique
 
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AccountReactivationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

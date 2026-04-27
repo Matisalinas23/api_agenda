@@ -1,5 +1,5 @@
 import express from "express"
-import { authMe, forgotPassword, getGoogleAuthUrl, googleCallback, loginUser, refresh, registerUser, resetPassword, verifyEmail, logoutUser, getSessions, revokeSession } from "./auth.controller"
+import { authMe, forgotPassword, getGoogleAuthUrl, googleCallback, loginUser, refresh, registerUser, resetPassword, verifyEmail, logoutUser, getSessions, revokeSession, requestAccountDeletion, reactivateAccount } from "./auth.controller"
 import { authMiddleware } from "../../middleweres/authMiddleware"
 
 const router = express.Router()
@@ -19,5 +19,7 @@ router.get("/google/callback", googleCallback);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+router.post("/request-deletion", authMiddleware, requestAccountDeletion);
 
 export default router

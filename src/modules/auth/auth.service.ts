@@ -10,7 +10,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { AutenticationError } from "../../errors/autenticationError";
-import { sendVerificationEmail, sendResetPasswordEmail } from "../../services/email.service";
+import { sendVerificationEmail, sendResetPasswordEmail, sendDeleteAccountEmail, sendAccountDeactivationEmail } from "../../services/email.service";
 import { getGoogleUserInfo } from "../../lib/google";
 import { ValidationError } from "../../errors/validationError";
 
@@ -19,11 +19,12 @@ const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10)
 }
 
-export const generateAccessToken = (userId: number, email: string, SECRET: string) => {
+export const generateAccessToken = (userId: number, email: string, SECRET: string, deleteAfter?: Date | null) => {
     return jwt.sign(
         {
             userId,
-            email
+            email,
+            deleteAfter: deleteAfter || null
         },
         SECRET,
         { "expiresIn": "5m" }
@@ -80,11 +81,15 @@ export const loginUserService = async (login: ILogin, ipAddress?: string, userAg
 
         if (!user) throw new UnauthorizedError("Email or password are incorrect");
         if (!user.verified) throw new AutenticationError("User is not verified yet");
+        
+        if (user.deleteAfter) {
+            throw new UnauthorizedError("Tu cuenta está en proceso de eliminación. Revisa tu correo para rehabilitarla.");
+        }
 
         await validatePassword(login.password, user.password!)
 
         const SECRET = process.env.SECRET
-        const token = generateAccessToken(user.id, user.email, SECRET!)
+        const token = generateAccessToken(user.id, user.email, SECRET!, user.deleteAfter)
         
         const refreshToken = crypto.randomBytes(40).toString("hex");
 
@@ -132,6 +137,10 @@ export const googleLoginService = async (code: string, ipAddress?: string, userA
                 },
             });
         }
+
+        if (user.deleteAfter) {
+            throw new UnauthorizedError("Tu cuenta está en proceso de eliminación. Revisa tu correo para rehabilitarla.");
+        }
     } else {
         // Create new user
         user = await prisma.user.create({
@@ -146,7 +155,7 @@ export const googleLoginService = async (code: string, ipAddress?: string, userA
     }
 
     const SECRET = process.env.SECRET;
-    const token = generateAccessToken(user.id, user.email, SECRET!);
+    const token = generateAccessToken(user.id, user.email, SECRET!, user.deleteAfter);
     
     const refreshToken = crypto.randomBytes(40).toString("hex");
 
@@ -180,7 +189,7 @@ export const refreshTokenService = async (refreshToken: string) => {
     }
 
     const SECRET = process.env.SECRET
-    const newAccessToken = generateAccessToken(session.userId, session.user.email, SECRET!);
+    const newAccessToken = generateAccessToken(session.userId, session.user.email, SECRET!, session.user.deleteAfter);
 
     return newAccessToken;
 }
@@ -323,4 +332,73 @@ export const resetPasswordService = async (token: string, newPassword: string) =
     await prisma.passwordResetToken.delete({ where: { token } });
 
     return { message: "Contraseña actualizada correctamente." };
+}
+
+export const requestAccountDeletionService = async (userId: number, password?: string) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError("Usuario no encontrado");
+
+    // Si el usuario tiene contraseña (no es login social), validamos
+    if (user.password) {
+        if (!password) throw new ValidationError("La contraseña es requerida para eliminar la cuenta");
+        await validatePassword(password, user.password);
+    }
+
+    const deleteAfter = new Date();
+    deleteAfter.setDate(deleteAfter.getDate() + 5);
+
+    const reactivationToken = crypto.randomBytes(32).toString("hex");
+    
+    // Usamos una transacción para asegurar consistencia
+    await prisma.$transaction([
+        prisma.user.update({
+            where: { id: userId },
+            data: { deleteAfter }
+        }),
+        prisma.accountReactivationToken.deleteMany({ where: { userId } }),
+        prisma.accountReactivationToken.create({
+            data: {
+                token: reactivationToken,
+                userId,
+                expiresAt: deleteAfter // El token expira cuando la cuenta se borra
+            }
+        }),
+        // Por seguridad, invalidamos todas las sesiones activas
+        prisma.session.updateMany({
+            where: { userId },
+            data: { isValid: false }
+        })
+    ]);
+
+    await sendAccountDeactivationEmail(user.email, reactivationToken);
+
+    return { message: "Tu cuenta ha sido inhabilitada y será eliminada permanentemente en 5 días. Revisa tu correo para más información." };
+}
+
+export const reactivateAccountService = async (token: string) => {
+    const reactivationToken = await prisma.accountReactivationToken.findUnique({
+        where: { token },
+        include: { user: true }
+    });
+
+    if (!reactivationToken) {
+        throw new UnauthorizedError("Token de rehabilitación inválido o expirado.");
+    }
+
+    // Si por alguna razón el token sigue ahí pero el usuario ya fue borrado (no debería pasar por el Cascade)
+    if (!reactivationToken.user) {
+        await prisma.accountReactivationToken.delete({ where: { token } });
+        throw new NotFoundError("Usuario no encontrado.");
+    }
+
+    // Rehabilitar la cuenta
+    await prisma.user.update({
+        where: { id: reactivationToken.userId },
+        data: { deleteAfter: null }
+    });
+
+    // Borrar el token usado
+    await prisma.accountReactivationToken.delete({ where: { token } });
+
+    return { message: "¡Bienvenido de nuevo! Tu cuenta ha sido rehabilitada con éxito. Ya puedes iniciar sesión normalmente." };
 }
