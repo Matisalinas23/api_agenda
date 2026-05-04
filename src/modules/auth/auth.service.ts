@@ -276,7 +276,7 @@ export const verifyEmailByTokenService = async (token: string) => {
         data: { verified: true },
     });
 
-    await prisma.verificationToken.delete({
+    await prisma.verificationToken.deleteMany({
         where: { token },
     });
 
@@ -315,7 +315,7 @@ export const resetPasswordService = async (token: string, newPassword: string) =
     if (!resetToken) throw new UnauthorizedError("Token inválido o expirado.");
     
     if (resetToken.expiresAt < new Date()) {
-        await prisma.passwordResetToken.delete({ where: { token } });
+        await prisma.passwordResetToken.deleteMany({ where: { token } });
         throw new UnauthorizedError("Token expirado.");
     }
 
@@ -329,7 +329,7 @@ export const resetPasswordService = async (token: string, newPassword: string) =
         }
     });
 
-    await prisma.passwordResetToken.delete({ where: { token } });
+    await prisma.passwordResetToken.deleteMany({ where: { token } });
 
     return { message: "Contraseña actualizada correctamente." };
 }
@@ -387,7 +387,7 @@ export const reactivateAccountService = async (token: string) => {
 
     // Si por alguna razón el token sigue ahí pero el usuario ya fue borrado (no debería pasar por el Cascade)
     if (!reactivationToken.user) {
-        await prisma.accountReactivationToken.delete({ where: { token } });
+        await prisma.accountReactivationToken.deleteMany({ where: { token } });
         throw new NotFoundError("Usuario no encontrado.");
     }
 
@@ -398,7 +398,7 @@ export const reactivateAccountService = async (token: string) => {
     });
 
     // Borrar el token usado
-    await prisma.accountReactivationToken.delete({ where: { token } });
+    await prisma.accountReactivationToken.deleteMany({ where: { token } });
 
     return { message: "¡Bienvenido de nuevo! Tu cuenta ha sido rehabilitada con éxito. Ya puedes iniciar sesión normalmente." };
 }

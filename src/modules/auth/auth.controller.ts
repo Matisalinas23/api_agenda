@@ -200,7 +200,7 @@ export const reactivateAccount = async (req: Request, res: Response, next: NextF
         const { token } = req.body;
         if (!token) throw new ValidationError("Token de rehabilitación requerido");
 
-        const result = await reactivateAccountService(String(token));
+        const result = await reactivateAccountService(token);
         res.status(200).json(result);
     } catch (error) {
         next(error);
