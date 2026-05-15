@@ -2,7 +2,11 @@ import { google } from "googleapis";
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+const NODE_ENV = process.env.NODE_ENV;
+const REDIRECT_URI_LOCAL = process.env.REDIRECT_URI_LOCAL;
+const REDIRECT_URI_WEB = process.env.REDIRECT_URI;
+
+const REDIRECT_URI = NODE_ENV === "development" ? REDIRECT_URI_LOCAL : REDIRECT_URI_WEB;
 
 const oauth2Client = new google.auth.OAuth2(
     CLIENT_ID,
