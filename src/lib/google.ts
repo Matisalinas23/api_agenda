@@ -10,7 +10,7 @@ const oauth2Client = new google.auth.OAuth2(
     REDIRECT_URI
 );
 
-export const getGoogleAuthUrl = () => {
+export const getGoogleAuthUrl = (state?: string) => {
     const scopes = [
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
@@ -20,6 +20,7 @@ export const getGoogleAuthUrl = () => {
         access_type: "offline",
         prompt: "consent",
         scope: scopes,
+        state: state
     });
 };
 

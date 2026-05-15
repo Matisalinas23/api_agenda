@@ -77,7 +77,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const getGoogleAuthUrl = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const url = generateGoogleUrl();
+        const redirectUrl = req.query.redirect as string;
+        const url = generateGoogleUrl(redirectUrl);
         res.json({ url });
     } catch (error) {
         next(error);
@@ -86,7 +87,7 @@ export const getGoogleAuthUrl = async (req: Request, res: Response, next: NextFu
 
 export const googleCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { code } = req.query;
+        const { code, state } = req.query;
         if (!code) throw new ValidationError("No code provided");
 
         const ipAddress = req.ip || req.socket.remoteAddress;
@@ -101,8 +102,20 @@ export const googleCallback = async (req: Request, res: Response, next: NextFunc
             maxAge: 7 * 24 * 60 * 60 * 1000, // Matching the standard login
         });
 
-        const frontendUrl = "http://localhost:5173";
-        res.redirect(`${frontendUrl}/#token=${token}`);
+        console.log("GOOGLE CALLBACK - State received:", state);
+
+        if (state && typeof state === 'string') {
+            console.log("Redirecting to mobile app:", state);
+            const redirectUrl = new URL(state);
+            redirectUrl.searchParams.append('token', token);
+            res.redirect(redirectUrl.toString());
+        } else {
+            console.log("No state found, redirecting to web");
+            const frontendUrl = process.env.NODE_ENV === "production" 
+                ? process.env.FRONTEND_URL_WEB 
+                : process.env.FRONTEND_URL_LOCAL;
+            res.redirect(`${frontendUrl}/#token=${token}`);
+        }
     } catch (error) {
         next(error);
     }
