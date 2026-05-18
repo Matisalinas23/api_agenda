@@ -12,7 +12,7 @@ export const getAllNotes = async (req: Request, res: Response, next: NextFunctio
 
 export const createNote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const note = await createNoteServie(req.body, req.params.id)
+        const note = await createNoteServie(req.body, req.params.userId)
         res.status(201).json(note)
     } catch (error) {
         next(error)
@@ -42,7 +42,7 @@ export const deleteNote = async (req: Request, res: Response, next: NextFunction
 
 export const orderNotesByAssignature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const notes = await orderNoteByAssignatureService(req.params.id)
+        const notes = await orderNoteByAssignatureService(req.params.userId)
         res.status(200).json(notes)
     } catch (error) {
         next(error)
@@ -51,7 +51,7 @@ export const orderNotesByAssignature = async (req: Request, res: Response, next:
 
 export const orderNotesByDate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const notes = await orderNotesByDateService(req.params.id)
+        const notes = await orderNotesByDateService(req.params.userId)
         res.status(200).json(notes)
     } catch (error) {
         next(error)

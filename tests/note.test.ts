@@ -87,3 +87,73 @@ describe("PUT /notes/:id", () => {
     })
 })
 
+describe("Validation of userId parameter", () => {
+    it("should return 400 if userId is not a number", async () => {
+        const res = await request(app)
+            .post("/notes/undefined")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Nota Prueba",
+                assignature: "Asig Prueba",
+                color: "#8CADFE",
+                limitDate: new Date(),
+                description: "Descripcion de prueba",
+            });
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            message: "El ID de usuario proporcionado es inválido o no tiene el formato correcto."
+        });
+    });
+
+    it("should return 400 if userId is 0", async () => {
+        const res = await request(app)
+            .post("/notes/0")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Nota Prueba",
+                assignature: "Asig Prueba",
+                color: "#8CADFE",
+                limitDate: new Date(),
+                description: "Descripcion de prueba",
+            });
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            message: "El ID de usuario proporcionado es inválido o no tiene el formato correcto."
+        });
+    });
+
+    it("should return 400 if userId is negative", async () => {
+        const res = await request(app)
+            .post("/notes/-5")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Nota Prueba",
+                assignature: "Asig Prueba",
+                color: "#8CADFE",
+                limitDate: new Date(),
+                description: "Descripcion de prueba",
+            });
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            message: "El ID de usuario proporcionado es inválido o no tiene el formato correcto."
+        });
+    });
+
+    it("should return 400 if userId is a decimal number", async () => {
+        const res = await request(app)
+            .post("/notes/1.5")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Nota Prueba",
+                assignature: "Asig Prueba",
+                color: "#8CADFE",
+                limitDate: new Date(),
+                description: "Descripcion de prueba",
+            });
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            message: "El ID de usuario proporcionado es inválido o no tiene el formato correcto."
+        });
+    });
+})
+
