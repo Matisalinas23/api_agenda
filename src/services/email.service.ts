@@ -107,6 +107,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
 
     try {
         console.log(`Sending password reset email to: ${email}...`);
+        console.log("A. Antes de sendMail")
         await transporter.sendMail({
             from: `"Agenda" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -117,6 +118,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
                 { text: "Restablecer mi contraseña", url: resetUrl }
             ),
         });
+        console.log("B. Después de sendMail")
         console.log("Password reset email sent successfully!");
     } catch (error: any) {
         console.error("Error sending password reset email:", error);
