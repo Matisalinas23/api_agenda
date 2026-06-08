@@ -107,8 +107,6 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
 
     try {
         console.log(`Sending password reset email to: ${email}...`);
-        await transporter.verify();
-        console.log("SMTP verified");
         await transporter.sendMail({
             from: `"Agenda" <${process.env.EMAIL_USER}>`,
             to: email,
