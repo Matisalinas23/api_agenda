@@ -99,15 +99,19 @@ export const sendReminderEmail = async (email: string, title: string, dueDate: D
 export const sendResetPasswordEmail = async (email: string, token: string) => {
     if (process.env.NODE_ENV === "test") return;
 
-    const baseUrl = process.env.NODE_ENV === "production" 
-        ? process.env.FRONTEND_URL_WEB 
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
+    const baseUrl = process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_URL_WEB
         : process.env.FRONTEND_URL_LOCAL;
     
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     try {
         console.log(`Sending password reset email to: ${email}...`);
-        console.time("SendMail")
+        await transporter.verify();
+        console.log("SMTP verified");
         await transporter.sendMail({
             from: `"Agenda" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -118,7 +122,6 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
                 { text: "Restablecer mi contraseña", url: resetUrl }
             ),
         });
-        console.timeEnd("SendMail")
         console.log("Password reset email sent successfully!");
     } catch (error: any) {
         console.error("Error sending password reset email:", error);
