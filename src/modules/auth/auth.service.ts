@@ -72,6 +72,7 @@ export const registerUserService = async (userDto: ICreateUser): Promise<any> =>
 }
 
 export const loginUserService = async (login: ILogin, ipAddress?: string, userAgent?: string) => {
+
     validateLoginUser(login)
 
     try {
@@ -284,15 +285,12 @@ export const verifyEmailByTokenService = async (token: string) => {
 };
 
 export const forgotPasswordService = async (email: string) => {
-    console.log("1. Inicio del endpoint...")
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
         return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
     }
-    console.log("2. Usuario encontrado...")
 
     const token = crypto.randomBytes(32).toString("hex");
-    console.log("3. Token generado...")
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hora
 
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
@@ -305,7 +303,6 @@ export const forgotPasswordService = async (email: string) => {
     });
 
     await sendResetPasswordEmail(user.email, token);
-    console.log("4. Correo enviado....")
 
     return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
 }
