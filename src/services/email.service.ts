@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "dns/promises";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -119,6 +120,9 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
         : process.env.FRONTEND_URL_LOCAL;
     
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    const result = await dns.lookup("smtp.gmail.com");
+    console.log(result);
 
     try {
         console.log("Verifying transporter...");
