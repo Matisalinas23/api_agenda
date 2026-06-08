@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import dns from "dns/promises";
 
 const transporter = nodemailer.createTransport({
-  host: "74.125.142.108",
+  host: "smtp.gmail.com",
   port: 587,
   secure: false,
   auth: {
@@ -110,6 +110,11 @@ export const sendReminderEmail = async (email: string, title: string, dueDate: D
 }
 
 export const sendResetPasswordEmail = async (email: string, token: string) => {
+    const addresses = await dns.lookup("smtp.gmail.com", {
+        all: true,
+    });
+
+    console.log(addresses);
     if (process.env.NODE_ENV === "test") return;
 
     const baseUrl = process.env.NODE_ENV === "production"
