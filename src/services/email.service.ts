@@ -121,6 +121,15 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     try {
+        console.log("Verifying transporter...");
+        await transporter.verify();
+        console.log("Transport verified!");
+    } catch (error: any) {
+        console.error("Error verifying transporter:", error);
+        throw new Error("No se pudo verificar el transporter.");
+    }
+
+    try {
         console.log(`Sending password reset email to: ${email}...`);
         await transporter.sendMail({
             from: `"Agenda" <${process.env.EMAIL_USER}>`,
