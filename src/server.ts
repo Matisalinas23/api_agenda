@@ -6,6 +6,7 @@ import app from "./app"
 import { initCronJobs } from "./cron"
 
 dns.setDefaultResultOrder("ipv4first");
+console.log("DNS Order:", dns.getDefaultResultOrder());
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
