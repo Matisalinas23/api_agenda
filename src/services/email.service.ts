@@ -99,9 +99,6 @@ export const sendReminderEmail = async (email: string, title: string, dueDate: D
 export const sendResetPasswordEmail = async (email: string, token: string) => {
     if (process.env.NODE_ENV === "test") return;
 
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
-
     const baseUrl = process.env.NODE_ENV === "production"
         ? process.env.FRONTEND_URL_WEB
         : process.env.FRONTEND_URL_LOCAL;
