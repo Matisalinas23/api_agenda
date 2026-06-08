@@ -122,6 +122,9 @@ export const googleCallback = async (req: Request, res: Response, next: NextFunc
 };
 
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    console.log("FORGOT PASSWORD HIT");
+    console.log("EMAIL:", req.body.email);
+
     try {
         const { email } = req.body;
         if (!email) throw new ValidationError("Email requerido");
