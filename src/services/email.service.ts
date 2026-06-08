@@ -2,16 +2,13 @@ import nodemailer from "nodemailer";
 import dns from "dns/promises";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "74.125.142.108",
   port: 587,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  connectionTimeout: 80000,
-  greetingTimeout: 80000,
-  socketTimeout: 80000,
 });
 
 /*
