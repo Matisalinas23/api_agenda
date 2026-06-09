@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dns from "dns/promises";
+import net from "node:net";
 
 const transporter = nodemailer.createTransport({
   host: "142.251.188.108",
@@ -23,6 +24,31 @@ const transporter = nodemailer.createTransport({
     }
 });
 */
+
+const testSMTPConnection = async () => {
+    console.log("Testing TCP connection...");
+
+    const socket = net.createConnection({
+        host: "142.250.107.109",
+        port: 587,
+    });
+
+    socket.setTimeout(15000);
+
+    socket.on("connect", () => {
+        console.log("TCP CONNECTED");
+        socket.end();
+    });
+
+    socket.on("timeout", () => {
+        console.log("TCP TIMEOUT");
+        socket.destroy();
+    });
+
+    socket.on("error", (err) => {
+        console.error("TCP ERROR:", err);
+    });
+}
 
 /**
  * Helper to generate a consistent, centered and responsive HTML email template.
@@ -122,6 +148,9 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
         all: true,
     });
     console.log(addresses);
+
+    await testSMTPConnection();
+    return;
 
     try {
         console.log("Verifying transporter...");
