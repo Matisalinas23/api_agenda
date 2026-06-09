@@ -309,7 +309,8 @@ export const forgotPasswordService = async (email: string) => {
             message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña."
         };
     } else {
-        return token;
+        const baseUrl = process.env.FRONTEND_URL_WEB;
+        return `${baseUrl}/reset-password?token=${token}`;
     }
 }
 
