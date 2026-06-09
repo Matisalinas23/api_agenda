@@ -102,7 +102,7 @@ export const sendResetPasswordEmail = async (email: string, token: string, platf
 
     const resetUrl = platform === "mobile"
         ? `${process.env.FRONTEND_URL_MOBILE}reset-password?token=${token}`
-        : `${process.env.FRONTEND_URL_WEB}/reset-password?token=${token}`;
+        : `${process.env.FRONTEND_URL_LOCAL}/reset-password?token=${token}`;
 
     try {
         console.log(`Sending password reset email to: ${email}...`);

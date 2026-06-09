@@ -311,7 +311,7 @@ export const forgotPasswordService = async (email: string, platform: "web" | "mo
         } else {
             return {
                 isDemo: true,
-                resetUrl: `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+                resetUrl: `${process.env.FRONTEND_URL_WEB}/reset-password?token=${token}`
             }
         }
     }
