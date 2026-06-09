@@ -123,10 +123,10 @@ export const googleCallback = async (req: Request, res: Response, next: NextFunc
 
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { email } = req.body;
+        const { email, platform } = req.body;
         if (!email) throw new ValidationError("Email requerido");
 
-        const result = await forgotPasswordService(email);
+        const result = await forgotPasswordService(email, platform);
         res.status(200).json(result);
     } catch (error) {
         next(error);

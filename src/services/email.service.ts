@@ -97,14 +97,12 @@ export const sendReminderEmail = async (email: string, title: string, dueDate: D
     }
 }
 
-export const sendResetPasswordEmail = async (email: string, token: string) => {
+export const sendResetPasswordEmail = async (email: string, token: string, platform: "web" | "mobile") => {
     if (process.env.NODE_ENV === "test") return;
 
-    const baseUrl = process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL_WEB
-        : process.env.FRONTEND_URL_LOCAL;
-    
-    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+    const resetUrl = platform === "mobile"
+        ? `${process.env.FRONTEND_URL_MOBILE}reset-password?token=${token}`
+        : `${process.env.FRONTEND_URL_WEB}/reset-password?token=${token}`;
 
     try {
         console.log(`Sending password reset email to: ${email}...`);

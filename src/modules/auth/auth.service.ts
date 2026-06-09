@@ -284,7 +284,7 @@ export const verifyEmailByTokenService = async (token: string) => {
     return { message: "Cuenta verificada correctamente" };
 };
 
-export const forgotPasswordService = async (email: string) => {
+export const forgotPasswordService = async (email: string, platform: "web" | "mobile") => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
         return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
@@ -301,17 +301,26 @@ export const forgotPasswordService = async (email: string) => {
             expiresAt
         }
     });
-    
-    if (process.env.NODE_ENV === "develoment") {
-        await sendResetPasswordEmail(user.email, token);
-    
-        return {
-            message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña."
-        };
-    } else {
-        const baseUrl = process.env.FRONTEND_URL_WEB;
-        return `${baseUrl}/reset-password?token=${token}`;
+
+    if (process.env.NODE_ENV === "production") {
+        if (platform === "mobile") {
+            return {
+                isDemo: true,
+                resetUrl: `${process.env.FRONTEND_URL_MOBILE}reset-password?token=${token}`
+            };
+        } else {
+            return {
+                isDemo: true,
+                resetUrl: `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+            }
+        }
     }
+
+    await sendResetPasswordEmail(user.email, token, platform);
+
+    return {
+        message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña."
+    };
 }
 
 export const resetPasswordService = async (token: string, newPassword: string) => {
