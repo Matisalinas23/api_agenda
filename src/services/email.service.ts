@@ -1,18 +1,6 @@
 import nodemailer from "nodemailer";
 import dns from "dns/promises";
-import net from "node:net";
 
-const transporter = nodemailer.createTransport({
-  host: "142.251.188.108",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-/*
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -23,32 +11,6 @@ const transporter = nodemailer.createTransport({
         rejectUnauthorized: false
     }
 });
-*/
-
-const testSMTPConnection = async () => {
-    console.log("Testing TCP connection...");
-
-    const socket = net.createConnection({
-        host: "142.250.107.109",
-        port: 587,
-    });
-
-    socket.setTimeout(15000);
-
-    socket.on("connect", () => {
-        console.log("TCP CONNECTED");
-        socket.end();
-    });
-
-    socket.on("timeout", () => {
-        console.log("TCP TIMEOUT");
-        socket.destroy();
-    });
-
-    socket.on("error", (err) => {
-        console.error("TCP ERROR:", err);
-    });
-}
 
 /**
  * Helper to generate a consistent, centered and responsive HTML email template.
@@ -143,23 +105,6 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
         : process.env.FRONTEND_URL_LOCAL;
     
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
-
-    const addresses = await dns.lookup("smtp.gmail.com", {
-        all: true,
-    });
-    console.log(addresses);
-
-    await testSMTPConnection();
-    return;
-
-    try {
-        console.log("Verifying transporter...");
-        await transporter.verify();
-        console.log("Transport verified!");
-    } catch (error: any) {
-        console.error("Error verifying transporter:", error);
-        throw new Error("No se pudo verificar el transporter.");
-    }
 
     try {
         console.log(`Sending password reset email to: ${email}...`);

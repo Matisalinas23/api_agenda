@@ -301,9 +301,16 @@ export const forgotPasswordService = async (email: string) => {
             expiresAt
         }
     });
-
-    await sendResetPasswordEmail(user.email, token);
-    return { message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña." };
+    
+    if (process.env.NODE_ENV === "develoment") {
+        await sendResetPasswordEmail(user.email, token);
+    
+        return {
+            message: "Si existe una cuenta asociada a este correo, se ha enviado un enlace para restablecer la contraseña."
+        };
+    } else {
+        return token;
+    }
 }
 
 export const resetPasswordService = async (token: string, newPassword: string) => {
